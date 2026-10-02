@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Location Vélos Valberg</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: #f4f6f8;
+      color: #222;
+    }
+
+    header {
+      background: #111827;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 25px;
+    }
+
+    header p {
+      margin: 6px 0 0;
+      opacity: .8;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 3px 12px rgba(0,0,0,.08);
+    }
+
+    .card h2 {
+      margin: 0 0 10px;
+      font-size: 16px;
+      color: #555;
+    }
+
+    .number {
+      font-size: 32px;
+      font-weight: bold;
+    }
+
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 15px;
+      cursor: pointer;
+      background: #111827;
+      color: white;
+    }
+
+    button:hover {
+      opacity: .9;
+    }
+
+    .section {
+      background: white;
+      border-radius: 15px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 3px 12px rgba(0,0,0,.08);
+    }
+
+    .section h2 {
+      margin-top: 0;
+    }
+
+    .bike {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 0;
+      border-bottom: 1px solid #eee;
+      gap: 15px;
+    }
+
+    .bike:last-child {
+      border-bottom: 0;
+    }
+
+    .bike-info strong {
+      display: block;
+      font-size: 17px;
+    }
+
+    .bike-info small {
+      color: #666;
+    }
+
+    .status {
+      padding: 7px 10px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
+    .available {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .rented {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .maintenance {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    #message {
+      margin-bottom: 15px;
+      padding: 12px;
+      border-radius: 10px;
+      display: none;
+    }
+
+    .error {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .success {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    @media(max-width:600px) {
+      .bike {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <h1>🚲 Location Vélos Valberg</h1>
+  <p>Gestion des vélos et locations</p>
+</header>
+
+<div class="container">
+
+  <div id="message"></div>
+
+  <div class="dashboard">
+
+    <div class="card">
+      <h2>🚲 Total vélos</h2>
+      <div class="number" id="totalBikes">-</div>
+    </div>
+
+    <div class="card">
+      <h2>✅ Disponibles</h2>
+      <div class="number" id="availableBikes">-</div>
+    </div>
+
+    <div class="card">
+      <h2>🔑 Loués</h2>
+      <div class="number" id="rentedBikes">-</div>
+    </div>
+
+    <div class="card">
+      <h2>🔧 Entretien</h2>
+      <div class="number" id="maintenanceBikes">-</div>
+    </div>
+
+  </div>
+
+  <div class="section">
+    <h2>🚲 Parc vélos</h2>
+
+    <div id="bikeList">
+      Chargement des vélos...
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>📋 Locations en cours</h2>
+
+    <div id="rentalList">
+      Chargement des locations...
+    </div>
+  </div>
+
+</div>
+
+<script>
+
+const SUPABASE_URL = "https://uludkrippzehjvxbghth.supabase.co";
+const SUPABASE_KEY = "sb_publishable_dcOILXwTw_qk7Fn-Quo0zQ_sBbW6eCb";
+
+const supabaseClient = supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+function showMessage(text, type = "success") {
+  const box = document.getElementById("message");
+
+  box.textContent = text;
+  box.className = type;
+  box.style.display = "block";
+
+  setTimeout(() => {
+    box.style.display = "none";
+  }, 4000);
+}
+
+function statusClass(status) {
+
+  if (status === "available") {
+    return "available";
+  }
+
+  if (status === "rented") {
+    return "rented";
+  }
+
+  if (status === "maintenance") {
+    return "maintenance";
+  }
+
+  return "";
+}
+
+function statusText(status) {
+
+  if (status === "available") return "Disponible";
+  if (status === "rented") return "Loué";
+  if (status === "maintenance") return "Entretien";
+
+  return status || "Inconnu";
+}
+
+
+async function loadBikes() {
+
+  const { data, error } = await supabaseClient
+    .from("bikes")
+    .select("*")
+    .order("bike_number", { ascending: true });
+
+  if (error) {
+    console.error(error);
+    showMessage("Erreur lors du chargement des vélos : " + error.message, "error");
+    return;
+  }
+
+  const bikes = data || [];
+
+  document.getElementById("totalBikes").textContent = bikes.length;
+
+  document.getElementById("availableBikes").textContent =
+    bikes.filter(b => b.status === "available").length;
+
+  document.getElementById("rentedBikes").textContent =
+    bikes.filter(b => b.status === "rented").length;
+
+  document.getElementById("maintenanceBikes").textContent =
+    bikes.filter(b => b.status === "maintenance").length;
+
+  const list = document.getElementById("bikeList");
+
+  if (bikes.length === 0) {
+    list.innerHTML = "<p>Aucun vélo enregistré.</p>";
+    return;
+  }
+
+  list.innerHTML = bikes.map(bike => `
+
+    <div class="bike">
+
+      <div class="bike-info">
+
+        <strong>
+          🚲 Vélo n°${bike.bike_number || "-"}
+        </strong>
+
+        <small>
+          ${bike.brand || ""} ${bike.model || ""}
+          ${bike.bike_type ? " • " + bike.bike_type : ""}
+          ${bike.size ? " • Taille " + bike.size : ""}
+        </small>
+
+      </div>
+
+      <span class="status ${statusClass(bike.status)}">
+        ${statusText(bike.status)}
+      </span>
+
+    </div>
+
+  `).join("");
+}
+
+
+async function loadRentals() {
+
+  const { data, error } = await supabaseClient
+    .from("rentals")
+    .select(`
+      *,
+      bikes (
+        bike_number,
+        brand,
+        model
+      ),
+      customers (
+        first_name,
+        last_name
+      )
+    `)
+    .eq("status", "active")
+    .order("start_date", { ascending: true });
+
+  if (error) {
+    console.error(error);
+
+    document.getElementById("rentalList").innerHTML =
+      "<p>Aucune location en cours à afficher.</p>";
+
+    return;
+  }
+
+  const rentals = data || [];
+
+  const list = document.getElementById("rentalList");
+
+  if (rentals.length === 0) {
+    list.innerHTML = "<p>🎉 Aucune location en cours.</p>";
+    return;
+  }
+
+  list.innerHTML = rentals.map(rental => {
+
+    const customer = rental.customers
+      ? `${rental.customers.first_name || ""} ${rental.customers.last_name || ""}`
+      : "Client";
+
+    const bike = rental.bikes
+      ? `Vélo n°${rental.bikes.bike_number || "-"}`
+      : "Vélo";
+
+    return `
+
+      <div class="bike">
+
+        <div class="bike-info">
+
+          <strong>${customer}</strong>
+
+          <small>
+            ${bike}
+            ${rental.start_date ? " • Début : " + rental.start_date : ""}
+            ${rental.end_date ? " • Retour : " + rental.end_date : ""}
+          </small>
+
+        </div>
+
+        <span class="status rented">
+          En location
+        </span>
+
+      </div>
+
+    `;
+
+  }).join("");
+}
+
+
+async function init() {
+
+  try {
+
+    await loadBikes();
+    await loadRentals();
+
+  } catch (error) {
+
+    console.error(error);
+
+    showMessage(
+      "Impossible de charger l'application.",
+      "error"
+    );
+
+  }
+
+}
+
+
+init();
+
+</script>
+
+</body>
+</html>
