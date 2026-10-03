@@ -284,7 +284,7 @@
   bike.name ||
   bike.model ||
   bike.bike_type ||
-  "Vélo " + bike.id;
+  "Vélo " + bike.id + (bike.taille ? " - " + bike.taille : "");
   
   const size = bike.taille || "";
 
