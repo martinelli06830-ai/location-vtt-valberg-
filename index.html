@@ -279,11 +279,14 @@
 
   data.forEach(bike => {
 
-    const name =
-      bike.name ||
-      bike.model ||
-      bike.bike_type ||
-      "Vélo " + bike.id;
+  const name =
+  bike.categorie ||
+  bike.name ||
+  bike.model ||
+  bike.bike_type ||
+  "Vélo " + bike.id;
+  
+  const size = bike.taille || "";
 
     const available =
       bike.available !== false;
