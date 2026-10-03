@@ -138,6 +138,7 @@
     <label>Nom du client</label>
     <input id="clientName" type="text" placeholder="Nom et prénom">
 
+  
     <label>Téléphone</label>
     <input id="clientPhone" type="tel" placeholder="06 00 00 00 00">
 
@@ -148,7 +149,7 @@
 
     <label>Durée</label>
     <select id="duration">
-      <option value="1">1/2 journée</option>
+      <option value="0.5">1/2 journée</option>
       <option value="1">1 journée</option>
       <option value="2">2 jours</option>
       <option value="3">3 jours</option>
@@ -227,79 +228,92 @@
 
   async function loadBikes() {
 
-    const bikesContainer =
-      document.getElementById("bikes");
+  const bikesContainer = document.getElementById("bikes");
+  const select = document.getElementById("bikeSelect");
 
-    const select =
-      document.getElementById("bikeSelect");
+  bikesContainer.innerHTML = "<p>Chargement des vélos...</p>";
+  select.innerHTML = '<option value="">Chargement des vélos...</option>';
 
-    const { data, error } =
-      await supabaseClient
-        .from("bikes")
-        .select("*")
-        .order("id");
+  const { data, error } = await supabaseClient
+    .from("bikes")
+    .select("*")
+    .order("id", { ascending: true });
 
-    if (error) {
+  if (error) {
 
-      bikesContainer.innerHTML =
-        "<p>Impossible de charger les vélos.</p>";
+    console.error("Erreur bikes :", error);
 
-      select.innerHTML =
-        "<option>Erreur de connexion</option>";
+    bikesContainer.innerHTML = `
+      <p style="color:#dc2626;font-weight:bold;">
+        ❌ Erreur de chargement des vélos
+      </p>
+      <p>${error.message}</p>
+    `;
 
-      console.error(error);
-
-      return;
-    }
-
-
-    bikesContainer.innerHTML = "";
     select.innerHTML =
-      '<option value="">Choisir un vélo</option>';
+      '<option value="">Erreur de connexion</option>';
 
-
-    data.forEach(bike => {
-
-      const name =
-        bike.name ||
-        bike.model ||
-        bike.bike_type ||
-        "Vélo " + bike.id;
-
-      const available =
-        bike.available !== false;
-
-      const div =
-        document.createElement("div");
-
-      div.className = "bike";
-
-      div.innerHTML = `
-        <strong>${name}</strong><br>
-        <span class="${available ? "available" : "rented"}">
-          ${available ? "● Disponible" : "● Loué"}
-        </span>
-      `;
-
-      bikesContainer.appendChild(div);
-
-
-      if (available) {
-
-        const option =
-          document.createElement("option");
-
-        option.value = bike.id;
-        option.textContent =
-          name;
-
-        select.appendChild(option);
-      }
-
-    });
-
+    return;
   }
 
+  console.log("Vélos reçus :", data);
+
+  if (!data || data.length === 0) {
+
+    bikesContainer.innerHTML = `
+      <p style="color:#666;">
+        Aucun vélo n'est enregistré dans la base de données.
+      </p>
+    `;
+
+    select.innerHTML =
+      '<option value="">Aucun vélo disponible</option>';
+
+    return;
+  }
+
+  bikesContainer.innerHTML = "";
+
+  select.innerHTML =
+    '<option value="">Choisir un vélo</option>';
+
+  data.forEach(bike => {
+
+    const name =
+      bike.name ||
+      bike.model ||
+      bike.bike_type ||
+      "Vélo " + bike.id;
+
+    const available =
+      bike.available !== false;
+
+    const div = document.createElement("div");
+
+    div.className = "bike";
+
+    div.innerHTML = `
+      <strong>🚲 ${name}</strong><br>
+      <span class="${available ? "available" : "rented"}">
+        ${available ? "● Disponible" : "● Loué"}
+      </span>
+    `;
+
+    bikesContainer.appendChild(div);
+
+    if (available) {
+
+      const option = document.createElement("option");
+
+      option.value = bike.id;
+      option.textContent = name;
+
+      select.appendChild(option);
+    }
+
+  });
+
+}
 
   /* ================================
      CREER UNE LOCATION
