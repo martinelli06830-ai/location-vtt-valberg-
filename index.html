@@ -1,14 +1,19 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
+
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
 
   <title>Location Vélos Valberg</title>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
+
     * {
       box-sizing: border-box;
       font-family: Arial, sans-serif;
@@ -38,7 +43,7 @@
     }
 
     .container {
-      max-width: 600px;
+      max-width: 650px;
       margin: auto;
       padding: 15px;
     }
@@ -53,6 +58,25 @@
 
     .card h2 {
       margin-top: 0;
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 13px;
+      margin-top: 7px;
+      margin-bottom: 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 9px;
+      font-size: 16px;
+      background: white;
     }
 
     button {
@@ -72,36 +96,34 @@
       background: #1d4ed8;
     }
 
-    input, select {
-      width: 100%;
-      padding: 13px;
-      margin-top: 7px;
-      margin-bottom: 12px;
-      border: 1px solid #d1d5db;
-      border-radius: 9px;
-      font-size: 16px;
-    }
-
-    label {
-      font-weight: bold;
-      font-size: 14px;
-    }
-
     .bike {
       border: 1px solid #e5e7eb;
-      border-radius: 10px;
-      padding: 12px;
+      border-radius: 12px;
+      padding: 14px;
       margin-top: 10px;
+      background: #fafafa;
+    }
+
+    .bike-name {
+      font-size: 17px;
+      font-weight: bold;
+    }
+
+    .bike-size {
+      margin-top: 5px;
+      color: #555;
     }
 
     .available {
       color: #16a34a;
       font-weight: bold;
+      margin-top: 8px;
     }
 
     .rented {
       color: #dc2626;
       font-weight: bold;
+      margin-top: 8px;
     }
 
     #message {
@@ -109,6 +131,7 @@
       padding: 12px;
       border-radius: 10px;
       display: none;
+      font-weight: bold;
     }
 
     .success {
@@ -120,299 +143,697 @@
       background: #fee2e2;
       color: #991b1b;
     }
+
+    .loading {
+      color: #666;
+    }
+
+    .empty {
+      color: #666;
+      text-align: center;
+      padding: 10px;
+    }
+
   </style>
+
 </head>
+
 
 <body>
 
+
 <header>
+
   <h1>🚲 Location Vélos Valberg</h1>
+
   <p>Gestion des locations</p>
+
 </header>
+
 
 <div class="container">
 
+
+  <!-- =========================
+       NOUVELLE LOCATION
+       ========================= -->
+
   <div class="card">
+
     <h2>➕ Nouvelle location</h2>
 
-    <label>Nom du client</label>
-    <input id="clientName" type="text" placeholder="Nom et prénom">
 
-  
-    <label>Téléphone</label>
-    <input id="clientPhone" type="tel" placeholder="06 00 00 00 00">
+    <label for="clientName">
+      Nom du client
+    </label>
 
-    <label>Vélo</label>
+    <input
+      id="clientName"
+      type="text"
+      placeholder="Nom et prénom"
+    >
+
+
+    <label for="clientPhone">
+      Téléphone
+    </label>
+
+    <input
+      id="clientPhone"
+      type="tel"
+      placeholder="06 00 00 00 00"
+    >
+
+
+    <label for="bikeSelect">
+      Vélo
+    </label>
+
     <select id="bikeSelect">
-      <option value="">Chargement des vélos...</option>
+
+      <option value="">
+        Chargement des vélos...
+      </option>
+
     </select>
 
-    <label>Durée</label>
+
+    <label for="duration">
+      Durée
+    </label>
+
     <select id="duration">
-      <option value="0.5">1/2 journée</option>
-      <option value="1">1 journée</option>
-      <option value="2">2 jours</option>
-      <option value="3">3 jours</option>
-      <option value="7">1 semaine</option>
+
+      <option value="0.5">
+        1/2 journée
+      </option>
+
+      <option value="1">
+        1 journée
+      </option>
+
+      <option value="2">
+        2 jours
+      </option>
+
+      <option value="3">
+        3 jours
+      </option>
+
+      <option value="7">
+        1 semaine
+      </option>
+
     </select>
+
 
     <button onclick="createRental()">
-      Enregistrer la location
+      ✅ Enregistrer la location
     </button>
 
+
     <div id="message"></div>
+
   </div>
 
 
+
+  <!-- =========================
+       STOCK VELOS
+       ========================= -->
+
   <div class="card">
-    <h2>🚲 Vélos disponibles</h2>
+
+    <h2>🚲 Stock des vélos</h2>
+
     <div id="bikes">
-      Chargement...
+
+      <p class="loading">
+        Chargement...
+      </p>
+
     </div>
+
   </div>
 
 
+
+  <!-- =========================
+       INFORMATIONS
+       ========================= -->
+
   <div class="card">
+
     <h2>📋 Informations</h2>
+
     <p>
       Application interne de gestion des locations de vélos.
     </p>
+
     <p>
       📍 Valberg
     </p>
+
   </div>
+
 
 </div>
 
 
+
 <script>
 
-  /* ================================
-     CONNEXION SUPABASE
-     ================================ */
 
-  const SUPABASE_URL =
-    "https://uludkrippzehjvxbghth.supabase.co";
+/* ==================================================
+   CONNEXION SUPABASE
+   ================================================== */
 
-  const SUPABASE_KEY =
-    "sb_publishable_dcOILXwTw_qk7Fn-Quo0zQ_sBbW6eCb";
+const SUPABASE_URL =
+  "https://uludkrippzehjvxbghth.supabase.co";
 
-  const supabaseClient =
-    supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_KEY
-    );
+const SUPABASE_KEY =
+  "sb_publishable_dcOILXwTw_qk7Fn-Quo0zQ_sBbW6eCb";
 
 
-  /* ================================
-     MESSAGE
-     ================================ */
+const supabaseClient =
+  supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
 
-  function showMessage(text, type) {
 
-    const message = document.getElementById("message");
 
-    message.innerText = text;
-    message.className = type;
-    message.style.display = "block";
+/* ==================================================
+   MESSAGE
+   ================================================== */
 
-    setTimeout(() => {
-      message.style.display = "none";
-    }, 4000);
+function showMessage(text, type) {
+
+  const message =
+    document.getElementById("message");
+
+  message.innerText = text;
+
+  message.className = type;
+
+  message.style.display = "block";
+
+
+  setTimeout(() => {
+
+    message.style.display = "none";
+
+  }, 4000);
+
+}
+
+
+
+/* ==================================================
+   NOM DU VELO
+   ================================================== */
+
+function getBikeName(bike) {
+
+  if (bike.categorie) {
+
+    return bike.categorie;
+
   }
 
+  if (bike.name) {
 
-  /* ================================
-     CHARGER LES VELOS
-     ================================ */
+    return bike.name;
 
-  async function loadBikes() {
+  }
 
-  const bikesContainer = document.getElementById("bikes");
-  const select = document.getElementById("bikeSelect");
+  if (bike.model) {
 
-  bikesContainer.innerHTML = "<p>Chargement des vélos...</p>";
-  select.innerHTML = '<option value="">Chargement des vélos...</option>';
+    return bike.model;
 
-  const { data, error } = await supabaseClient
-    .from("bikes")
-    .select("*")
-    .order("id", { ascending: true });
+  }
+
+  return "Vélo " + bike.id;
+
+}
+
+
+
+/* ==================================================
+   TAILLE DU VELO
+   ================================================== */
+
+function getBikeSize(bike) {
+
+  if (bike.taille) {
+
+    return "Taille : " + bike.taille;
+
+  }
+
+  return "Taille non renseignée";
+
+}
+
+
+
+/* ==================================================
+   CHARGER LES VELOS
+   ================================================== */
+
+async function loadBikes() {
+
+
+  const bikesContainer =
+    document.getElementById("bikes");
+
+
+  const select =
+    document.getElementById("bikeSelect");
+
+
+  bikesContainer.innerHTML =
+    '<p class="loading">Chargement des vélos...</p>';
+
+
+  select.innerHTML =
+    '<option value="">Chargement des vélos...</option>';
+
+
+
+  const { data, error } =
+
+    await supabaseClient
+
+      .from("bikes")
+
+      .select("*")
+
+      .order("id", {
+        ascending: true
+      });
+
+
+
+  /* =========================
+     ERREUR
+     ========================= */
 
   if (error) {
 
-    console.error("Erreur bikes :", error);
+
+    console.error(
+      "Erreur bikes :",
+      error
+    );
+
 
     bikesContainer.innerHTML = `
-      <p style="color:#dc2626;font-weight:bold;">
-        ❌ Erreur de chargement des vélos
+
+      <p class="error">
+
+        ❌ Erreur de chargement
+
       </p>
-      <p>${error.message}</p>
+
+      <p>
+
+        ${error.message}
+
+      </p>
+
     `;
 
+
     select.innerHTML =
+
       '<option value="">Erreur de connexion</option>';
 
+
     return;
+
   }
 
-  console.log("Vélos reçus :", data);
+
+
+  console.log(
+    "Vélos reçus :",
+    data
+  );
+
+
+
+  /* =========================
+     AUCUN VELO
+     ========================= */
 
   if (!data || data.length === 0) {
 
+
     bikesContainer.innerHTML = `
-      <p style="color:#666;">
-        Aucun vélo n'est enregistré dans la base de données.
+
+      <p class="empty">
+
+        Aucun vélo enregistré.
+
       </p>
+
     `;
 
+
     select.innerHTML =
-      '<option value="">Aucun vélo disponible</option>';
+
+      '<option value="">Aucun vélo</option>';
+
 
     return;
+
   }
+
+
 
   bikesContainer.innerHTML = "";
 
-  select.innerHTML =
-    '<option value="">Choisir un vélo</option>';
+
+  select.innerHTML = `
+
+    <option value="">
+
+      Choisir un vélo
+
+    </option>
+
+  `;
+
+
+
+  /* =========================
+     AFFICHAGE
+     ========================= */
 
   data.forEach(bike => {
 
-  const name =
-  bike.categorie ||
-  bike.name ||
-  bike.model ||
-  bike.bike_type ||
-  "Vélo " + bike.id + (bike.taille ? " - " + bike.taille : "");
-  
-  const size = bike.taille || "";
+
+    const name =
+      getBikeName(bike);
+
+
+    const size =
+      getBikeSize(bike);
+
+
+    /*
+      IMPORTANT :
+      La colonne utilisée dans
+      ta base est "disponible".
+    */
 
     const available =
-      bike.available !== false;
+      bike.disponible !== false;
 
-    const div = document.createElement("div");
 
-    div.className = "bike";
+
+    /* =========================
+       CARTE VELO
+       ========================= */
+
+    const div =
+      document.createElement("div");
+
+
+    div.className =
+      "bike";
+
 
     div.innerHTML = `
-      <strong>🚲 ${name}</strong><br>
-      <span class="${available ? "available" : "rented"}">
-        ${available ? "● Disponible" : "● Loué"}
-      </span>
+
+      <div class="bike-name">
+
+        🚲 ${name}
+
+      </div>
+
+      <div class="bike-size">
+
+        ${size}
+
+      </div>
+
+      <div class="${available ? "available" : "rented"}">
+
+        ${available
+          ? "● Disponible"
+          : "● Loué"}
+
+      </div>
+
     `;
+
 
     bikesContainer.appendChild(div);
 
+
+
+    /* =========================
+       LISTE RESERVATION
+       ========================= */
+
     if (available) {
 
-      const option = document.createElement("option");
 
-      option.value = bike.id;
-      option.textContent = name;
+      const option =
+        document.createElement("option");
+
+
+      option.value =
+        bike.id;
+
+
+      option.textContent =
+        name +
+        (bike.taille
+          ? " - " + bike.taille
+          : "");
+
 
       select.appendChild(option);
+
     }
 
   });
 
 }
 
-  /* ================================
-     CREER UNE LOCATION
-     ================================ */
-
-  async function createRental() {
-
-    const clientName =
-      document.getElementById("clientName").value.trim();
-
-    const clientPhone =
-      document.getElementById("clientPhone").value.trim();
-
-    const bikeId =
-      document.getElementById("bikeSelect").value;
-
-    const duration =
-      document.getElementById("duration").value;
 
 
-    if (!clientName) {
+/* ==================================================
+   CREER UNE LOCATION
+   ================================================== */
 
-      showMessage(
-        "Veuillez entrer le nom du client.",
-        "error"
-      );
-
-      return;
-    }
+async function createRental() {
 
 
-    if (!bikeId) {
-
-      showMessage(
-        "Veuillez sélectionner un vélo.",
-        "error"
-      );
-
-      return;
-    }
+  const clientName =
+    document
+      .getElementById("clientName")
+      .value
+      .trim();
 
 
-    const { error } =
-      await supabaseClient
-        .from("rentals")
-        .insert({
-
-          client_name: clientName,
-
-          client_phone: clientPhone,
-
-          bike_id: bikeId,
-
-          duration_days: Number(duration),
-
-          status: "active"
-
-        });
+  const clientPhone =
+    document
+      .getElementById("clientPhone")
+      .value
+      .trim();
 
 
-    if (error) {
+  const bikeId =
+    document
+      .getElementById("bikeSelect")
+      .value;
 
-      console.error(error);
 
-      showMessage(
-        "Erreur : " + error.message,
-        "error"
-      );
+  const duration =
+    document
+      .getElementById("duration")
+      .value;
 
-      return;
-    }
+
+
+  /* =========================
+     VERIFICATION CLIENT
+     ========================= */
+
+  if (!clientName) {
 
 
     showMessage(
-      "✅ Location enregistrée !",
-      "success"
+      "Veuillez entrer le nom du client.",
+      "error"
     );
 
 
-    document.getElementById("clientName").value = "";
-    document.getElementById("clientPhone").value = "";
-    document.getElementById("bikeSelect").value = "";
-
-
-    loadBikes();
+    return;
 
   }
 
 
-  /* ================================
-     DEMARRAGE
-     ================================ */
+
+  /* =========================
+     VERIFICATION VELO
+     ========================= */
+
+  if (!bikeId) {
+
+
+    showMessage(
+      "Veuillez sélectionner un vélo.",
+      "error"
+    );
+
+
+    return;
+
+  }
+
+
+
+  /* =========================
+     ENREGISTRER LOCATION
+     ========================= */
+
+  const { error } =
+
+    await supabaseClient
+
+      .from("rentals")
+
+      .insert({
+
+        client_name:
+          clientName,
+
+        client_phone:
+          clientPhone,
+
+        bike_id:
+          bikeId,
+
+        duration_days:
+          Number(duration),
+
+        status:
+          "active"
+
+      });
+
+
+
+  /* =========================
+     ERREUR LOCATION
+     ========================= */
+
+  if (error) {
+
+
+    console.error(error);
+
+
+    showMessage(
+      "Erreur : " + error.message,
+      "error"
+    );
+
+
+    return;
+
+  }
+
+
+
+  /* =========================
+     PASSER LE VELO EN LOUE
+     ========================= */
+
+  const { error: bikeError } =
+
+    await supabaseClient
+
+      .from("bikes")
+
+      .update({
+
+        disponible: false
+
+      })
+
+      .eq("id", bikeId);
+
+
+
+  if (bikeError) {
+
+
+    console.error(
+      "Erreur disponibilité :",
+      bikeError
+    );
+
+  }
+
+
+
+  /* =========================
+     SUCCES
+     ========================= */
+
+  showMessage(
+    "✅ Location enregistrée !",
+    "success"
+  );
+
+
+
+  /* =========================
+     VIDER FORMULAIRE
+     ========================= */
+
+  document
+    .getElementById("clientName")
+    .value = "";
+
+
+  document
+    .getElementById("clientPhone")
+    .value = "";
+
+
+  document
+    .getElementById("bikeSelect")
+    .value = "";
+
+
+
+  /* =========================
+     RECHARGER STOCK
+     ========================= */
 
   loadBikes();
 
+}
+
+
+
+/* ==================================================
+   DEMARRAGE APPLICATION
+   ================================================== */
+
+loadBikes();
+
+
 </script>
 
+
 </body>
+
 </html>
